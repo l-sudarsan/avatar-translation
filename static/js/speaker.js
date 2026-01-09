@@ -192,8 +192,7 @@ async function createSession() {
             
             // Normalize info from backend (handle both old and new API response formats)
             const sessionCodeValue = result.sessionCode || result.sessionId || '------';
-            const listenerUrlValue = (result.listenerUrl || `${window.location.origin}/listener/${sessionId}`)
-                .replace(/^http:/, 'https:');
+            const listenerUrlValue = result.listenerUrl || `${window.location.origin}/listener/${sessionId}`;
             
             // Update session info display
             document.getElementById('sessionInfo').style.display = 'block';

@@ -306,7 +306,7 @@ socket.on('sessionEnded', (data) => {
 ### 1. Start Server
 ```powershell
 cd C:\Users\sudarsanl\dev-git\azure-speech\speech-avatar\production-deployment\translate-app
-python app.py
+python -m flask run --host=0.0.0.0 --port=5000
 ```
 
 ### 2. Open Speaker Interface

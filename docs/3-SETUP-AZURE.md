@@ -1,34 +1,39 @@
-# Deployment Checklist
+# Setup in Azure
 
-## Pre-Deployment Testing
+> **Status**: ⏳ Cloud deployment testing pending
 
-### Local Testing (Required)
-- [ ] All tests in `TESTING_CHECKLIST.md` completed
+## Pre-Deployment Requirements
+
+### Local Testing (Required Before Deployment)
+
+- [ ] All tests in `5-TESTING.md` completed
 - [ ] Tested with real Azure Speech service
 - [ ] Tested with multiple browsers
 - [ ] Tested with multiple concurrent listeners (5+)
 - [ ] Tested session creation/end flow
 - [ ] Verified WebRTC avatar connection works
-- [ ] Checked for memory leaks (long sessions)
-- [ ] Reviewed server logs for errors
 
 ### Environment Preparation
+
 - [ ] `.env` file configured with production credentials
 - [ ] Azure Speech Service subscription active
 - [ ] Quota limits reviewed (TPS, concurrent connections)
 - [ ] Python dependencies installed (`requirements.txt`)
-- [ ] Tested with production-like network conditions
+
+---
 
 ## Deployment Options
 
 ### Option 1: Azure App Service (Recommended)
 
 #### Prerequisites
-- [ ] Azure subscription active
-- [ ] Azure CLI installed (`az`)
-- [ ] Resource group created
 
-#### Steps
+- Azure subscription active
+- Azure CLI installed (`az`)
+- Resource group created
+
+#### Deployment Steps
+
 ```powershell
 # 1. Login to Azure
 az login
@@ -61,7 +66,8 @@ az webapp up `
   --resource-group myResourceGroup
 ```
 
-#### Post-Deployment
+#### Post-Deployment Verification
+
 - [ ] Verify app starts: `https://my-translate-app.azurewebsites.net`
 - [ ] Test speaker interface: `/speaker`
 - [ ] Test listener URL generation
@@ -70,13 +76,17 @@ az webapp up `
 - [ ] Enable HTTPS redirect
 - [ ] Set up monitoring/logs
 
+---
+
 ### Option 2: Docker Container
 
 #### Prerequisites
-- [ ] Docker installed
-- [ ] Docker Hub account (or Azure Container Registry)
 
-#### Steps
+- Docker installed
+- Docker Hub account (or Azure Container Registry)
+
+#### Deployment Steps
+
 ```powershell
 # 1. Build image
 docker build -t translate-app:latest .
@@ -106,18 +116,23 @@ az container create `
 ```
 
 #### Post-Deployment
+
 - [ ] Verify container running
 - [ ] Test public URL
 - [ ] Check logs: `docker logs <container>`
 - [ ] Monitor resource usage
 
+---
+
 ### Option 3: Azure Container Apps
 
 #### Prerequisites
-- [ ] Azure CLI with Container Apps extension
-- [ ] Container image pushed to registry
 
-#### Steps
+- Azure CLI with Container Apps extension
+- Container image pushed to registry
+
+#### Deployment Steps
+
 ```powershell
 # 1. Create Container Apps environment
 az containerapp env create `
@@ -141,44 +156,57 @@ az containerapp create `
 ```
 
 #### Post-Deployment
+
 - [ ] Get app URL: `az containerapp show --name translate-app ...`
 - [ ] Test full workflow
 - [ ] Configure scaling rules
 - [ ] Set up monitoring
 
+---
+
 ## Security Configuration
 
 ### HTTPS Setup
+
 - [ ] Custom domain configured
 - [ ] SSL/TLS certificate installed
 - [ ] HTTP → HTTPS redirect enabled
 - [ ] HSTS header configured
 
 ### Environment Variables
+
 - [ ] All secrets in environment variables (not code)
 - [ ] `.env` file NOT in version control
 - [ ] Azure Key Vault integration (optional)
 
 ### CORS Configuration
+
 If accessing from different domains:
+
 ```python
 from flask_cors import CORS
 CORS(app, origins=["https://yourdomain.com"])
 ```
+
 - [ ] CORS configured for allowed origins
 - [ ] Tested cross-origin requests
 
 ### Rate Limiting (Recommended)
+
 ```powershell
 pip install Flask-Limiter
 ```
+
 - [ ] Rate limiting implemented
 - [ ] API endpoints protected
 - [ ] Abuse prevention measures
 
+---
+
 ## Production Configuration
 
 ### Server Settings
+
 ```python
 # app.py - Production mode
 if __name__ == '__main__':
@@ -190,12 +218,15 @@ if __name__ == '__main__':
         log_output=True
     )
 ```
+
 - [ ] `debug=False` in production
 - [ ] Proper logging configured
 - [ ] Error pages customized
 
 ### Session Persistence (Recommended)
+
 For multi-server deployments:
+
 ```python
 # Use Redis for session storage
 import redis
@@ -206,11 +237,13 @@ redis_client = redis.Redis(
     password='your-key'
 )
 ```
+
 - [ ] Redis configured (if needed)
 - [ ] Session data migrated to Redis
 - [ ] Tested with multiple servers
 
 ### WebSocket Configuration
+
 ```python
 # For production with multiple workers
 socketio = SocketIO(
@@ -220,25 +253,32 @@ socketio = SocketIO(
     async_mode='eventlet'
 )
 ```
+
 - [ ] Message queue configured (if scaled)
 - [ ] CORS origins restricted
 - [ ] Async mode verified
 
+---
+
 ## Monitoring & Logging
 
 ### Application Insights (Azure)
+
 ```powershell
 pip install applicationinsights
 ```
+
 ```python
 from applicationinsights import TelemetryClient
 tc = TelemetryClient('your-instrumentation-key')
 ```
+
 - [ ] Application Insights enabled
 - [ ] Custom events tracked
 - [ ] Performance metrics monitored
 
 ### Logging Configuration
+
 ```python
 import logging
 logging.basicConfig(
@@ -250,73 +290,69 @@ logging.basicConfig(
     ]
 )
 ```
+
 - [ ] Logging level set (INFO/WARNING)
 - [ ] Log rotation configured
 - [ ] Logs accessible for debugging
 
 ### Health Check Endpoint
+
 ```python
 @app.route('/health')
 def health():
     return {'status': 'healthy'}, 200
 ```
+
 - [ ] Health check endpoint added
 - [ ] Load balancer configured to use it
+
+---
 
 ## Performance Optimization
 
 ### Caching
+
 - [ ] Static files cached (CSS, JS)
 - [ ] CDN configured (optional)
 - [ ] Browser caching headers set
 
 ### Compression
+
 ```python
 from flask_compress import Compress
 Compress(app)
 ```
+
 - [ ] Response compression enabled
 - [ ] Tested bandwidth reduction
 
 ### Connection Pooling
-- [ ] Database connections pooled (if using DB)
+
 - [ ] Azure Speech SDK connections reused
 - [ ] Memory usage monitored
+
+---
 
 ## Backup & Recovery
 
 ### Configuration Backup
+
 - [ ] `.env` file backed up securely
 - [ ] Azure credentials stored in Key Vault
 - [ ] Deployment scripts versioned
 
-### Database Backup (If applicable)
-- [ ] Automated backups configured
-- [ ] Backup restoration tested
-- [ ] Retention policy defined
-
 ### Disaster Recovery Plan
+
 - [ ] RTO/RPO defined (Recovery Time/Point Objectives)
 - [ ] Failover procedure documented
 - [ ] Regular DR drills scheduled
 
-## User Documentation
+---
 
-### End-User Guides
-- [ ] Speaker quick start guide created
-- [ ] Listener instructions provided
-- [ ] FAQ document prepared
-- [ ] Video tutorial recorded (optional)
-
-### Admin Documentation
-- [ ] Deployment procedure documented
-- [ ] Troubleshooting guide created
-- [ ] Monitoring dashboard configured
-- [ ] Incident response plan defined
-
-## Post-Deployment Verification
+## Go-Live Checklist
 
 ### Functional Testing
+
 - [ ] Speaker can create session
 - [ ] Listener URL accessible externally
 - [ ] Multiple listeners can join
@@ -326,21 +362,21 @@ Compress(app)
 - [ ] Mobile devices tested
 
 ### Performance Testing
+
 - [ ] Load test with 10+ concurrent sessions
 - [ ] Latency within acceptable limits (<2s)
 - [ ] No memory leaks over 1 hour
 - [ ] CPU usage acceptable under load
 
 ### Security Testing
+
 - [ ] Secrets not exposed in responses
 - [ ] HTTPS connection verified
 - [ ] CORS policy enforced
 - [ ] Rate limiting working
-- [ ] No SQL injection vulnerabilities (if DB used)
-
-## Go-Live Checklist
 
 ### Final Steps
+
 - [ ] Smoke test on production
 - [ ] Monitoring alerts configured
 - [ ] Support team trained
@@ -348,29 +384,28 @@ Compress(app)
 - [ ] Rollback plan prepared
 - [ ] On-call schedule defined
 
-### Launch
-- [ ] ✅ All critical tests passing
-- [ ] ✅ No blocking issues
-- [ ] ✅ Monitoring active
-- [ ] ✅ Support available
-
 **DEPLOY TO PRODUCTION** 🚀
+
+---
 
 ## Post-Launch
 
 ### Week 1
+
 - [ ] Monitor error rates daily
 - [ ] Review user feedback
 - [ ] Check performance metrics
 - [ ] Address critical issues immediately
 
 ### Week 2-4
+
 - [ ] Analyze usage patterns
 - [ ] Optimize based on real data
 - [ ] Plan feature enhancements
 - [ ] Review costs and scaling
 
 ### Ongoing
+
 - [ ] Weekly performance review
 - [ ] Monthly security updates
 - [ ] Quarterly capacity planning
@@ -381,6 +416,7 @@ Compress(app)
 ## Quick Deployment Commands
 
 ### Azure App Service (Fast)
+
 ```powershell
 # One-command deploy (from app directory)
 az webapp up `
@@ -395,23 +431,16 @@ az webapp config appsettings set `
 ```
 
 ### Docker (Fast)
+
 ```powershell
 # Build and run
 docker build -t translate-app .
 docker run -p 5000:5000 -e SPEECH_KEY=xxx -e SPEECH_REGION=xxx translate-app
 ```
 
-### Local Test Server (Fast)
-```powershell
-# Quick test
-$env:SPEECH_KEY="xxx"
-$env:SPEECH_REGION="xxx"
-python -m flask run --host=0.0.0.0 --port=5000
-```
-
 ---
 
-## Troubleshooting Common Issues
+## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
@@ -421,15 +450,3 @@ python -m flask run --host=0.0.0.0 --port=5000
 | Socket.IO disconnect | Check firewall, enable WebSocket |
 | High latency | Review Azure region, network path |
 | Session not found | Check in-memory storage, consider Redis |
-
----
-
-**Ready to Deploy?**
-
-1. ✅ Complete all Pre-Deployment Testing
-2. ✅ Choose deployment option
-3. ✅ Follow deployment steps
-4. ✅ Verify post-deployment
-5. ✅ Monitor and optimize
-
-**Good luck! 🚀**

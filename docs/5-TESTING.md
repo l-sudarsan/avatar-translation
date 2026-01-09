@@ -1,4 +1,6 @@
-# Testing Checklist - Speaker/Listener Mode
+# Testing
+
+> **Status**: ✅ Local deployment tested | ⏳ Cloud deployment testing pending
 
 ## Pre-Test Setup
 
@@ -6,8 +8,12 @@
   - [ ] `SPEECH_KEY` set
   - [ ] `SPEECH_REGION` set
 - [ ] Python dependencies installed (`pip install -r requirements.txt`)
-- [ ] Server running (`python app.py`)
+- [ ] Server running (`python -m flask run --host=0.0.0.0 --port=5000`)
 - [ ] Server shows: "Listening on http://0.0.0.0:5000"
+
+> ⚠️ **Audio Feedback Warning**: Do not run speaker and listener on the same device during testing. The microphone will pick up the avatar's audio output, causing feedback. Use Dev Tunnels and test the listener on a separate device (phone, tablet, or another computer).
+
+---
 
 ## Test 1: Speaker Session Creation
 
@@ -31,6 +37,8 @@
 - [ ] Listener count shows "0 listeners"
 - [ ] "Start Translation" button enabled
 
+---
+
 ## Test 2: Listener Joins Session
 
 **URL**: Copy from speaker interface
@@ -53,6 +61,8 @@
 - [ ] Listener count updates to "1 listener"
 - [ ] Count increases in real-time
 
+---
+
 ## Test 3: Multiple Listeners
 
 ### Steps
@@ -63,6 +73,8 @@
 - [ ] Speaker shows "3 listeners"
 - [ ] Each listener connects independently
 - [ ] All listeners see "Avatar Connected ✅"
+
+---
 
 ## Test 4: Start Translation
 
@@ -91,6 +103,8 @@
 - [ ] Translation added to history with timestamp
 - [ ] Audio indicator animates during avatar speech
 
+---
+
 ## Test 5: Continuous Translation
 
 ### Steps
@@ -107,6 +121,8 @@
 - [ ] Avatar speaks each translation sequentially
 - [ ] No translations are missed
 
+---
+
 ## Test 6: Stop Translation
 
 ### Steps
@@ -121,6 +137,8 @@
 - [ ] Listeners remain connected
 - [ ] Session still active
 
+---
+
 ## Test 7: Restart Translation
 
 ### Steps
@@ -133,6 +151,8 @@
 - [ ] History continues (not cleared)
 - [ ] Avatar works normally
 
+---
+
 ## Test 8: Listener Disconnects
 
 ### Steps
@@ -143,6 +163,8 @@
 - [ ] Speaker listener count decreases by 1
 - [ ] Remaining listeners unaffected
 - [ ] Translation continues normally
+
+---
 
 ## Test 9: End Session
 
@@ -160,6 +182,8 @@
 - [ ] Avatar connection closes
 - [ ] Translation stops
 - [ ] Cannot reconnect (session no longer exists)
+
+---
 
 ## Test 10: Error Handling
 
@@ -183,10 +207,12 @@
 - [ ] Mute listener browser tab
 - [ ] Expected: Avatar video plays, no sound (expected behavior)
 
+---
+
 ## Test 11: Cross-Device Testing
 
 ### Option A: Local Network
-1. [ ] Find local IP: `ipconfig` (Windows) / `ifconfig` (Mac/Linux)
+1. [ ] Find local IP: `ipconfig` (Windows)
 2. [ ] Use `http://192.168.x.x:5000/listener/123456` on phone
 3. [ ] Test translation from desktop to phone
 
@@ -199,6 +225,8 @@
 - [ ] Works same as localhost
 - [ ] May have slightly higher latency
 - [ ] HTTPS required for microphone on non-localhost
+
+---
 
 ## Test 12: Performance Testing
 
@@ -219,6 +247,8 @@
 - [ ] No errors in server logs
 - [ ] Smooth avatar playback
 
+---
+
 ## Test 13: Different Languages
 
 ### Test 13a: English → French
@@ -238,6 +268,8 @@
 - [ ] Avatar voice matches language
 - [ ] Correct accents and pronunciation
 
+---
+
 ## Test 14: Edge Cases
 
 ### Test 14a: Very Long Speech
@@ -256,6 +288,102 @@
 - [ ] Start translation but don't speak for 1 minute
 - [ ] Expected: No errors, waits patiently
 
+---
+
+## Basic Functionality Checklist
+
+- [ ] Server starts without errors
+- [ ] Can access pages via URL
+- [ ] Socket.IO connects (check browser console)
+- [ ] WebRTC connection establishes
+- [ ] Avatar video appears
+
+## Translation Features Checklist
+
+- [ ] Microphone access granted
+- [ ] Speech recognition works
+- [ ] Translation appears in real-time
+- [ ] Live transcription boxes update
+- [ ] Translation history shows entries
+
+## Multi-User Testing Checklist
+
+- [ ] Create session successfully
+- [ ] Generate listener join link
+- [ ] Listener can join from different device
+- [ ] Listener sees translations in real-time
+- [ ] Multiple listeners work simultaneously
+- [ ] Session cleanup works properly
+
+---
+
+## Troubleshooting Common Issues
+
+### Listener Can't Connect to Avatar
+**Symptoms**: "Connecting to avatar..." never completes
+
+**Solutions**:
+1. Check session ID in URL is valid
+2. Verify speaker created session first
+3. Check browser console for WebRTC errors
+4. Try HTTPS dev tunnel (WebRTC requires secure context)
+
+### No Audio in Listener Browser
+**Symptoms**: Avatar appears but no sound
+
+**Solutions**:
+1. Check browser audio permissions
+2. Unmute browser tab
+3. Verify system volume
+4. Check Azure Speech service quota
+
+### Listener Count Not Updating
+**Symptoms**: Speaker doesn't see listener join
+
+**Solutions**:
+1. Check Socket.IO connection in browser console
+2. Verify listener called `socket.emit('joinSession')`
+3. Check server logs for join events
+
+### Translation Not Broadcasting
+**Symptoms**: Speaker sees translation, listener doesn't
+
+**Solutions**:
+1. Verify both joined same session ID
+2. Check Socket.IO room membership
+3. Inspect network tab for Socket.IO messages
+4. Check server logs for broadcast events
+
+### Session Not Found Error
+**Symptoms**: 404 error when accessing listener URL
+
+**Solutions**:
+1. Verify session was created successfully
+2. Check session ID matches exactly (case-sensitive)
+3. Note: Sessions are in-memory, restart clears them
+
+### WebRTC Connection Fails
+**Symptoms**: "ICE connection state: failed", avatar doesn't appear
+
+**Solutions**:
+1. Check if ICE token is being fetched
+2. Verify TURN servers are accessible
+3. Test from different network (corporate VPNs may block WebRTC)
+
+### Socket.IO Won't Connect
+**Symptoms**: "Socket.IO disconnected" in logs
+
+**Solutions**:
+```python
+# In app.py, add more verbose logging
+socketio = SocketIO(app, 
+                    cors_allowed_origins="*",
+                    logger=True,
+                    engineio_logger=True)
+```
+
+---
+
 ## Test Results Summary
 
 **Date**: _______________
@@ -273,8 +401,8 @@
 
 **Notes**:
 _______________________________________________
-_______________________________________________
-_______________________________________________
+
+---
 
 ## Success Criteria
 
@@ -297,9 +425,21 @@ _______________________________________________
 
 ---
 
-**Next Steps After Testing**:
+## Success Indicators
+
+You'll know it's working when:
+- ✅ Listener count shows connected users
+- ✅ Avatar appears and speaks in listener view
+- ✅ Translations appear in real-time
+- ✅ History builds up correctly
+- ✅ No errors in console
+
+---
+
+## Next Steps After Testing
+
 1. Review server logs for warnings
 2. Check Azure Speech service usage/quota
 3. Document any custom configuration needed
-4. Plan for production deployment
+4. Plan for production deployment (see `3-SETUP-AZURE.md`)
 5. Create user documentation based on real usage
