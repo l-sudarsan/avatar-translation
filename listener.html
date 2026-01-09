@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listener Mode - Translation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .session-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .session-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+            margin: 10px 5px;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        .status-connected { background: #4CAF50; }
+        .status-disconnected { background: #f44336; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .avatar-container {
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto 30px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        #remoteVideo {
+            width: 100%;
+            min-height: 540px;
+            background: #000;
+        }
+        .translation-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .translation-box {
+            padding: 20px;
+            border-radius: 10px;
+            min-height: 120px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .source-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 4px solid #2196F3;
+        }
+        .target-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 4px solid #4CAF50;
+        }
+        .box-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .box-content {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .history-section {
+            margin-top: 30px;
+        }
+        .history-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .history-meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .history-text {
+            margin: 5px 0;
+        }
+        .audio-indicator {
+            display: none;
+            text-align: center;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .wave-bars {
+            display: inline-flex;
+            gap: 3px;
+            align-items: center;
+            height: 20px;
+        }
+        .wave-bar {
+            width: 4px;
+            background: #667eea;
+            border-radius: 2px;
+            animation: wave 1s infinite ease-in-out;
+        }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        @keyframes wave {
+            0%, 100% { height: 8px; }
+            50% { height: 20px; }
+        }
+        @media (max-width: 768px) {
+            .translation-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Start overlay - requires user click to enable audio -->
+<div id="startOverlay" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(102, 126, 234, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    cursor: pointer;
+">
+    <div style="text-align: center; color: white;">
+        <div style="font-size: 80px; margin-bottom: 20px;">🎧</div>
+        <h1 style="font-size: 32px; margin-bottom: 10px;">Ready to Join Translation</h1>
+        <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.9;">Click anywhere to start listening</p>
+        <button id="startButton" style="
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        ">▶️ Start Listening</button>
+        <p style="font-size: 14px; margin-top: 20px; opacity: 0.7;">Audio will be enabled after clicking</p>
+    </div>
+</div>
+
+<div class="container">
+    <h1>🎧 Listener Mode</h1>
+    
+    <input type="hidden" id="clientId" value="{{ client_id }}">
+    <input type="hidden" id="sessionId" value="{{ session_id }}">
+    
+    <!-- Session Header -->
+    <div class="session-header">
+        <div class="session-name" id="sessionName">Loading session...</div>
+        <div>
+            <span class="connection-status">
+                <span class="status-dot status-disconnected" id="avatarStatus"></span>
+                Avatar: <span id="avatarStatusText">Connecting...</span>
+            </span>
+            <span class="connection-status">
+                <span class="status-dot status-disconnected" id="translationStatus"></span>
+                Translation: <span id="translationStatusText">Waiting...</span>
+            </span>
+        </div>
+        <div style="margin-top: 10px; font-size: 14px;">
+            Session: <strong id="sessionCode">{{ session_id }}</strong>
+        </div>
+    </div>
+    
+    <!-- Audio Indicator -->
+    <div class="audio-indicator" id="audioIndicator">
+        <span style="font-size: 16px; font-weight: bold; color: #856404;">🔊 Speaker is talking...</span>
+        <div class="wave-bars" style="margin-top: 10px;">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+        </div>
+    </div>
+    
+    <!-- Avatar Video -->
+    <div class="avatar-container">
+        <div id="remoteVideo"></div>
+    </div>
+    
+    <!-- Live Translation Display -->
+    <div class="translation-panel">
+        <div class="translation-box source-box">
+            <div class="box-title" id="sourceLanguageLabel">Original Speech</div>
+            <div class="box-content" id="sourceTranscription">
+                <p style="color: #999; margin: 0;">Waiting for speaker...</p>
+            </div>
+        </div>
+        <div class="translation-box target-box">
+            <div class="box-title" id="targetLanguageLabel">Translation</div>
+            <div class="box-content" id="targetTranscription">
+                <p style="color: #999; margin: 0;">Translation will appear here...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Translation History -->
+    <div class="history-section">
+        <h2 style="color: #667eea;">Translation History</h2>
+        <div id="translationHistory" style="max-height: 400px; overflow-y: auto;">
+            <p style="color: #999; text-align: center; padding: 20px;">No translations yet...</p>
+        </div>
+    </div>
+    
+    <!-- Logs (collapsible for debugging) -->
+    <details style="margin-top: 30px;">
+        <summary style="cursor: pointer; padding: 10px; background: #f0f0f0; border-radius: 5px; font-weight: bold;">
+            🔧 Debug Logs
+        </summary>
+        <textarea id="logging" style="width: 100%; height: 200px; margin-top: 10px; font-size: small; font-family: monospace;"></textarea>
+    </details>
+</div>
+
+<!-- Socket.IO Client Library -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<!-- Listener Application Logic -->
+<script src="/static/js/listener.js"></script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speaker Mode - Speech Translation</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+    <style>
+        .session-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .session-code {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .listener-url {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        .copy-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .copy-button:hover {
+            background: #45a049;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-active { background: #4CAF50; }
+        .status-inactive { background: #ccc; }
+        .listener-count {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<h1>🎤 Speaker Mode - Translation Control</h1>
+
+<input type="hidden" id="clientId" value="{{ client_id }}">
+<input type="hidden" id="sessionId" value="{{ session_id }}">
+
+<!-- Session Information Card -->
+<div class="session-info" id="sessionInfo" style="display: none;">
+    <h2 style="margin: 0 0 10px 0;">📡 Active Translation Session</h2>
+    <div>Session Code: <span class="session-code" id="sessionCode">------</span></div>
+    <div class="listener-count">
+        <span class="status-indicator status-inactive" id="statusDot"></span>
+        <span id="listenerCount">0</span> listeners connected
+    </div>
+    <div style="margin-top: 15px;">
+        <strong>Listener URL:</strong>
+        <div class="listener-url" id="listenerUrl">Waiting for session...</div>
+        <button class="copy-button" onclick="window.copyListenerUrl()" id="copyBtn" disabled>📋 Copy URL</button>
+        <button class="copy-button" style="background: #2196F3; margin-left: 10px;" onclick="window.shareListenerUrl()" id="shareBtn" disabled>📤 Share</button>
+    </div>
+</div>
+
+<div id="configuration">
+  <h2 style="background-color: white; width: 400px;">Translation Configuration</h2>
+  
+  <label style="font-size: medium;" for="sessionName">Session Name:</label>
+  <input id="sessionName" type="text" size="32" style="font-size: medium;" value="Translation Session" placeholder="My Translation Session"></input><br />
+  
+  <label style="font-size: medium;" for="sourceLanguage">Source Language (Speak in):</label>
+  <select id="sourceLanguage" style="font-size: medium; width: 200px;">
+    <option value="en-US">English (US)</option>
+    <option value="es-ES">Spanish (Spain)</option>
+    <option value="fr-FR">French (France)</option>
+    <option value="de-DE">German (Germany)</option>
+    <option value="it-IT">Italian (Italy)</option>
+    <option value="pt-BR">Portuguese (Brazil)</option>
+    <option value="ja-JP">Japanese</option>
+    <option value="zh-CN">Chinese (Mandarin, Simplified)</option>
+    <option value="ko-KR">Korean</option>
+    <option value="hi-IN">Hindi (India)</option>
+  </select><br />
+  
+  <label style="font-size: medium;" for="targetLanguage">Target Language (Translate to):</label>
+  <select id="targetLanguage" style="font-size: medium; width: 200px;">
+    <option value="es-ES" selected>Spanish (Spain)</option>
+    <option value="en-US">English (US)</option>
+    <option value="fr-FR">French (France)</option>
+    <option value="de-DE">German (Germany)</option>
+    <option value="it-IT">Italian (Italy)</option>
+    <option value="pt-BR">Portuguese (Brazil)</option>
+    <option value="ja-JP">Japanese</option>
+    <option value="zh-CN">Chinese (Mandarin, Simplified)</option>
+    <option value="ko-KR">Korean</option>
+    <option value="hi-IN">Hindi (India)</option>
+  </select><br />
+  
+  <label style="font-size: medium;" for="targetVoice">Target Voice (for Listener's Avatar):</label>
+  <input id="targetVoice" type="text" size="32" style="font-size: medium;" value="es-ES-ElviraNeural" placeholder="e.g., es-ES-ElviraNeural"></input><br />
+  <span style="font-size: small; color: #666;">💡 This voice will be used in listener's avatar</span><br /><br />
+  
+  <h2 style="background-color: white; width: 400px;">Avatar Configuration (for Listeners)</h2>
+  <label style="font-size: medium;" for="talkingAvatarCharacter">Avatar Character:</label>
+  <input id="talkingAvatarCharacter" type="text" size="32" style="font-size: medium;" value="lisa"></input><br />
+  <label style="font-size: medium;" for="talkingAvatarStyle">Avatar Style:</label>
+  <input id="talkingAvatarStyle" type="text" size="32" style="font-size: medium;" value="casual-sitting"></input><br />
+  <label style="font-size: medium;" for="backgroundColor">Background Color:</label>
+  <input id="backgroundColor" type="text" size="16" style="font-size: medium;" value="#FFFFFFFF"></input><br />
+  <input type="checkbox" id="customizedAvatar" onchange="toggleBuiltInVoice()">Custom Avatar</input><br />
+  <input type="checkbox" id="useBuiltInVoice" style="display: none;">Use Built-in Voice (for custom avatar voice sync)</input><br />
+  <span id="builtInVoiceHint" style="display: none; font-size: small; color: #666;">💡 Enable this if your custom avatar has its own trained voice</span><br />
+  <input type="checkbox" id="transparentBackground">Transparent Background</input><br />
+  <input type="checkbox" id="videoCrop">Crop Video (16:9)</input><br />
+
+<script>
+function toggleBuiltInVoice() {
+    const isCustom = document.getElementById('customizedAvatar').checked;
+    document.getElementById('useBuiltInVoice').style.display = isCustom ? 'inline' : 'none';
+    document.getElementById('builtInVoiceHint').style.display = isCustom ? 'inline' : 'none';
+    if (isCustom) {
+        document.getElementById('useBuiltInVoice').checked = true; // Default to true for custom avatar
+    }
+}
+</script>
+</div>
+
+<h2 style="background-color: white; width: 400px;">Control Panel</h2>
+<button id="createSession" onclick="window.createSession()" style="background-color: #4CAF50; font-size: 18px; padding: 15px 30px;">🚀 Create Session</button>
+<button id="startTranslation" onclick="window.startTranslation()" disabled style="font-size: 18px; padding: 15px 30px;">🎤 Start Speaking</button>
+<button id="stopTranslation" onclick="window.stopTranslation()" disabled>⏹️ Stop Speaking</button>
+<button id="endSession" onclick="window.endSession()" disabled style="background-color: #f44336;">❌ End Session</button>
+<br /><br />
+
+<div id="microphoneIndicator" style="display: none; margin-top: 10px; padding: 10px; background-color: #ffebee; border-left: 4px solid #f44336;">
+  <span style="font-size: 16px; color: #f44336;">🎤 <strong>Listening...</strong> Speak into your microphone</span>
+  <div id="audioLevel" style="margin-top: 5px; height: 10px; background-color: #ffcdd2; border-radius: 5px;">
+    <div id="audioLevelBar" style="height: 100%; width: 0%; background-color: #f44336; border-radius: 5px; transition: width 0.1s;"></div>
+  </div>
+</div>
+
+<h2 style="background-color: white; width: 800px;">Live Transcription</h2>
+<div style="display: flex; gap: 20px; margin-bottom: 20px; width: 1200px;">
+  <div style="flex: 1; min-width: 400px;">
+    <h3 style="margin: 0 0 10px 0; color: #2196F3;">Source (Your Speech)</h3>
+    <div id="sourceTranscription" style="border: 1px solid #2196F3; padding: 10px; min-height: 100px; background-color: #e3f2fd; border-radius: 4px;">
+      <p style="color: #999; margin: 0;">Your speech will appear here...</p>
+    </div>
+  </div>
+  <div style="flex: 1; min-width: 400px;">
+    <h3 style="margin: 0 0 10px 0; color: #4CAF50;">Target (Translation)</h3>
+    <div id="targetTranscription" style="border: 1px solid #4CAF50; padding: 10px; min-height: 100px; background-color: #e8f5e9; border-radius: 4px;">
+      <p style="color: #999; margin: 0;">Translation will appear here...</p>
+    </div>
+  </div>
+</div>
+
+<h2 style="background-color: white; width: 800px;">Translation History</h2>
+<div id="translationResults" style="border: 1px solid #ccc; padding: 10px; min-height: 150px; max-height: 300px; overflow-y: auto; background-color: #f9f9f9; width: 1200px;">
+  <p style="color: #999;">Translation results will appear here...</p>
+</div>
+
+<h2 style="background-color: white; width: 400px;">Logs</h2>
+<textarea id="logging" style="width: 1200px; height: 200px; font-size: small;"></textarea>
+
+<!-- Socket.IO Client Library -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<!-- Speaker Application Logic -->
+<script src="static/js/speaker.js"></script>
+</body>
+</html>
