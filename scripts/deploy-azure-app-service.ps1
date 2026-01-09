@@ -84,7 +84,7 @@ az webapp config set --resource-group $ResourceGroupName --name $AppServiceName 
 Write-Host "  - Always-on enabled" -ForegroundColor Green
 
 # Configure startup command using app settings (more reliable)
-$startupCmd = "gunicorn --worker-class gevent -w 1 --bind 0.0.0.0:8000 --timeout 120 app:app"
+$startupCmd = "gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:8000 --timeout 120 app:app"
 Write-Host "  - Startup command will be: $startupCmd" -ForegroundColor Green
 
 # Step 5: Configure app settings (environment variables)
@@ -135,7 +135,7 @@ Write-Host "  - App settings configured (Windows uses web.config for startup)" -
 Write-Host "`n[6/7] Creating deployment package" -ForegroundColor Cyan
 
 $deployDir = Join-Path $PSScriptRoot "deploy-temp"
-$sourceDir = $PSScriptRoot
+$sourceDir = Split-Path -Parent $PSScriptRoot
 
 # Clean up existing temp folder
 if (Test-Path $deployDir) {
@@ -157,7 +157,7 @@ if (Test-Path $vadFile) {
 # Create startup.sh for Linux App Service
 $startupScript = @"
 #!/bin/bash
-gunicorn --worker-class gevent -w 1 --bind 0.0.0.0:8000 --timeout 120 app:app
+gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:8000 --timeout 120 app:app
 "@
 Set-Content -Path (Join-Path $deployDir "startup.sh") -Value $startupScript -NoNewline
 Write-Host "  - Created startup.sh for Linux" -ForegroundColor Green

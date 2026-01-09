@@ -4,7 +4,7 @@
 
 ## Overview
 
-This document details the complete implementation of the Speaker/Listener mode for the Azure Speech Translation Avatar application.
+This document details the implementation of the Speaker/Listener mode for the Azure Speech Translation Avatar application.
 
 ## What Was Built
 
@@ -58,14 +58,14 @@ This document details the complete implementation of the Speaker/Listener mode f
 
 #### 3. Refactored Avatar Connection
 
-- Created **`connectAvatarInternal()`** function
+- **`connectAvatarInternal()`** function
 - Centralized WebRTC avatar setup logic
 - Supports both legacy and new listener modes
 - Maintains original `/api/connectAvatar` for backwards compatibility
 
 #### 4. Session-Based Translation Broadcasting
 
-- Modified translation recognizer callback
+- Translation recognizer callback
 - Broadcasts to **Socket.IO session rooms** instead of individual clients
 - All listeners in session receive same translation simultaneously
 - Dual event format:
@@ -92,7 +92,7 @@ This document details the complete implementation of the Speaker/Listener mode f
 
 ### Frontend Files
 
-#### 1. speaker.html (~170 lines)
+#### 1. speaker.html
 
 **Purpose**: Control interface for speaker to manage translation sessions
 
@@ -103,16 +103,9 @@ This document details the complete implementation of the Speaker/Listener mode f
 - **Live Transcription**: Source and target text boxes, microphone indicator
 - **Translation History**: Chronological list with auto-scroll
 
-**Notable**: **NO avatar video container** (per requirements)
+#### 2. listener.html
 
-#### 2. listener.html (~230 lines)
-
-**Purpose**: Beautiful avatar-only display for remote participants
-
-**Design**:
-- Modern gradient background (purple-blue)
-- Professional, clean layout
-- Mobile-responsive CSS Grid
+**Purpose**: avatar-only display for remote participants
 
 **Key Sections**:
 - **Session Header**: Session name, connection status badge
@@ -122,9 +115,9 @@ This document details the complete implementation of the Speaker/Listener mode f
 - **Translation History**: Beautiful cards with timestamps
 - **Debug Logs** (collapsible): Technical status messages
 
-**Notable**: **NO control buttons** (read-only interface per requirements)
+**NO control buttons** (read-only interface per requirements)
 
-#### 3. static/js/speaker.js (~370 lines)
+#### 3. static/js/speaker.js
 
 **Purpose**: Client-side logic for speaker mode
 
@@ -151,7 +144,7 @@ addTranslationToHistory() // Display translations
 - Listens for `listenerJoined` events
 - Updates UI in real-time
 
-#### 4. static/js/listener.js (~330 lines)
+#### 4. static/js/listener.js
 
 **Purpose**: Client-side logic for listener mode with WebRTC avatar
 
@@ -370,68 +363,6 @@ socket.on('sessionEnded', (data) => {
 
 ---
 
-## Architecture Decisions
-
-### Why In-Memory Sessions?
-
-**Pros**:
-- Simple implementation
-- No database dependency
-- Fast access
-
-**Cons**:
-- Lost on server restart
-- Doesn't scale across multiple servers
-
-**Future**: Migrate to Redis for production
-
-### Why 6-Digit Codes?
-
-- Easy to share verbally
-- 1 million combinations (sufficient for short-lived sessions)
-- Simple to implement
-
-**Future**: Add optional password protection
-
-### Why Socket.IO Rooms?
-
-- Built-in broadcasting to multiple clients
-- Efficient message distribution
-- Automatic cleanup on disconnect
-
-### Why Separate HTML Files?
-
-- Clear separation of concerns
-- Different UX requirements (speaker vs listener)
-- Easier to maintain and extend
-
----
-
-## What Works
-
-✅ **Core Functionality**:
-- Session creation with unique codes
-- Listener URL generation and sharing
-- Multiple listeners per session
-- Real-time translation broadcasting
-- Avatar video streaming to listeners only
-- Listener count tracking
-- Session termination with notifications
-
-✅ **User Experience**:
-- Speaker sees controls, no avatar (bandwidth saved)
-- Listener sees avatar only, no controls (immersive)
-- Real-time updates via Socket.IO
-- Beautiful, professional UI design
-- Responsive layout (works on mobile)
-
-✅ **Technical**:
-- WebRTC avatar connection for listeners
-- Socket.IO room-based broadcasting
-- Proper error handling
-- Legacy route compatibility
-- Secure credential management
-
 ---
 
 ## Known Limitations
@@ -443,28 +374,6 @@ socket.on('sessionEnded', (data) => {
 5. **No Recording**: Translation history not saved to file
 6. **No Chat**: Listeners cannot message speaker
 7. **No Speaker Video**: Only avatar, no webcam option
-
----
-
-## Files Changed/Created
-
-### Backend
-- ✅ `app.py` - ~987 lines (session management, translation broadcasting, WebRTC)
-
-### Frontend
-- ✅ `speaker.html` - ~187 lines (control interface)
-- ✅ `listener.html` - ~276 lines (avatar display)
-- ✅ `static/js/speaker.js` - ~509 lines (session mgmt, audio streaming)
-- ✅ `static/js/listener.js` - ~530 lines (WebRTC avatar, Socket.IO)
-
-### Documentation
-- ✅ `1-ARCHITECTURE.md` - System architecture
-- ✅ `2-SETUP-LOCAL.md` - Local setup guide
-- ✅ `3-SETUP-AZURE.md` - Azure deployment guide
-- ✅ `4-IMPLEMENTATION.md` - This file
-- ✅ `5-TESTING.md` - Testing guide
-
-**Total New/Modified Lines**: ~2,200 lines
 
 ---
 
@@ -491,7 +400,7 @@ socket.on('sessionEnded', (data) => {
 4. Create user documentation
 5. Train support team
 
-### Phase 4: Scaling (if needed)
+### Phase 4: Scaling
 1. Multi-server deployment
 2. Azure SignalR Service integration
 3. CDN for static assets
@@ -514,10 +423,3 @@ socket.on('sessionEnded', (data) => {
 - ✅ Use HTTPS in production
 - ❌ Don't share listener URLs publicly
 - ❌ Don't reuse session codes
-
-### Environment Variables
-Never commit `.env` file with real credentials:
-```bash
-SPEECH_KEY=your-key
-SPEECH_REGION=your-region
-```

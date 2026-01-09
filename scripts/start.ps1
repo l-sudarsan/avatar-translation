@@ -78,10 +78,10 @@ Write-Host "║  🚀 Ready to start!                                       ║"
 Write-Host "╚═══════════════════════════════════════════════════════════╝" -ForegroundColor Green
 Write-Host ""
 Write-Host "To start the application:" -ForegroundColor Cyan
-Write-Host "  $pythonCmd app.py" -ForegroundColor White
+Write-Host "  $pythonCmd -m flask run --host=0.0.0.0 --port=5000" -ForegroundColor White
 Write-Host ""
 Write-Host "Then open in your browser:" -ForegroundColor Cyan
-Write-Host "  http://localhost:5000" -ForegroundColor White
+Write-Host "  http://localhost:5000/speaker" -ForegroundColor White
 Write-Host ""
 Write-Host "For dev tunnel (public access):" -ForegroundColor Cyan
 Write-Host "  1. In VS Code, open PORTS tab" -ForegroundColor White
@@ -95,5 +95,5 @@ if ($startNow -eq "y" -or $startNow -eq "Y" -or $startNow -eq "yes") {
     Write-Host ""
     Write-Host "🚀 Starting application..." -ForegroundColor Green
     Write-Host ""
-    & $pythonCmd app.py
+    & $pythonCmd -m flask run --host=0.0.0.0 --port=5000
 }

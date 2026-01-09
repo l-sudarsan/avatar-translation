@@ -24,17 +24,99 @@ Real-time speech translation with AI avatar synthesis. A speaker talks in one la
 - Speech to Text Avatar and Custom Avatar https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech-avatar/what-is-text-to-speech-avatar
 - Modern browser (Chrome, Edge, Firefox)
 
+### Azure Avatar Setup
+
+This application requires Azure Text-to-Speech Avatar. You can use prebuilt avatars or create custom avatars.
+
+#### Prebuilt Avatars
+
+Prebuilt avatars are available out-of-the-box once you have an Azure Speech resource. No additional setup required.
+
+#### Custom Avatar (Limited Access)
+
+> ⚠️ **Access Required**: Custom text-to-speech avatar access is limited based on eligibility and usage criteria. Request access on the [intake form](https://aka.ms/customneural).
+
+Custom avatars allow you to create a personalized, branded avatar from video recordings:
+
+1. **Request Access**: Submit the [intake form](https://aka.ms/customneural) for custom avatar access
+2. **Get Consent**: Obtain recorded consent statement from the talent
+3. **Prepare Training Data**: Refer to the documentation below for preparing videos
+4. **Train Model**: Use [Microsoft Foundry Portal](https://ai.azure.com) or Speech Studio to train your avatar
+5. **Deploy**: Deploy the trained model to your Speech resource
+
+📖 **Documentation**:
+- [What is Custom Text-to-Speech Avatar](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech-avatar/what-is-custom-text-to-speech-avatar)
+- [How to Create a Custom Avatar](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech-avatar/custom-avatar-create?pivots=ai-foundry-portal)
+- [How to Record Training Videos](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech-avatar/custom-avatar-record-video-samples)
+
+### Responsible AI
+
+When creating custom avatars or custom neural voices, you must follow Microsoft's Responsible AI guidelines:
+
+#### Voice & Avatar Talent Consent
+
+- **Written Permission**: Obtain explicit written consent from talent before using their voice or likeness
+- **Informed Consent**: Ensure talent understands how text-to-speech and avatar synthesis works
+- **Recorded Statement**: Upload a consent video with the talent acknowledging usage of their voice/image
+- **Usage Transparency**: Share intended use cases so talent knows who will interact with their synthetic likeness
+
+📖 **Documentation**:
+- [Disclosure for Voice and Avatar Talent](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/disclosure-voice-talent)
+- [Transparency Note for Custom Neural Voice](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/transparency-note)
+- [Disclosure Design Guidelines](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/concepts-disclosure-guidelines)
+- [Disclosure design patterns](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/concepts-disclosure-patterns-avatar?view=foundry-classic)
+- [Data, Privacy and Security](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/data-privacy-security?view=foundry-classic&tabs=custom-avatar)
+
+## Use Cases
+
+Real-time speech translation avatars enable multilingual communication across various industries:
+
+### Enterprise & Corporate
+- **Internal Townhalls** — Executive communications to global workforce in multiple languages
+- **Sales Conversations** — Customer engagements with real-time translation
+- **Training & Onboarding** — Multilingual employee training sessions
+- **All-Hands Meetings** — Organization-wide announcements with live translation
+
+### Customer Service
+- **Virtual Agents** — AI-powered customer support with human-like avatars
+- **Help Desk** — Technical support across language barriers
+- **Banking & Financial Services** — Multilingual customer assistance
+
+### Healthcare
+- **Patient Communication** — Medical consultations with non-native speakers
+- **Telehealth** — Remote healthcare with real-time translation
+- **Medical Training** — Educational content for international medical staff
+
+### Education
+- **Online Learning** — Lectures and courses accessible in multiple languages
+- **Interactive Lessons** — Engaging educational content with avatar presenters
+- **Museum Tours** — Multilingual guided experiences
+
+### Media & Entertainment
+- **Broadcasting** — News and content delivery in multiple languages
+- **Gaming** — In-game characters with localized speech
+- **Live Events** — Conferences and presentations with real-time translation
+
+### Accessibility
+- **ALS Voice Preservation** — Preserving voices for those with speech impairments
+- **Real-time Translation** — Breaking down language barriers for accessibility
+
 ### Installation
 
 ```powershell
-# 1. Install dependencies
+# 1. Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\Activate      # Windows PowerShell
+# source venv/bin/activate   # macOS/Linux
+
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 2. Configure Azure credentials
+# 3. Configure Azure credentials
 cp .env.example .env
 # Edit .env with your SPEECH_REGION and SPEECH_KEY
 
-# 3. Run the application
+# 4. Run the application
 python -m flask run --host=0.0.0.0 --port=5000
 ```
 
@@ -137,26 +219,6 @@ ngrok http 5000
 ```
 
 > **Note**: HTTPS is required for microphone access in browsers.
-
-## Deployment
-
-### Docker
-
-```powershell
-# Build
-docker build -t speech-avatar .
-
-# Run
-docker run -p 5000:5000 --env-file .env speech-avatar
-```
-
-### Azure App Service
-
-```powershell
-.\scripts\deploy-azure-app-service.ps1 -ResourceGroupName "my-rg" -AppServiceName "my-app"
-```
-
-See [docs/3-SETUP-AZURE.md](docs/3-SETUP-AZURE.md) for detailed deployment options.
 
 ## Troubleshooting
 

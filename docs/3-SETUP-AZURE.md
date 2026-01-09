@@ -24,15 +24,28 @@
 
 ## Deployment Options
 
+> 💡 **Quick Deploy Scripts**: Use the scripts in `scripts/` folder for automated deployment:
+> - `scripts/deploy-azure-app-service.ps1` - Deploy to Azure App Service
+> - `scripts/deploy-docker.ps1` - Build and run Docker container locally
+
 ### Option 1: Azure App Service (Recommended)
 
-#### Prerequisites
+#### Using Deployment Script
+
+```powershell
+# Automated deployment
+.\scripts\deploy-azure-app-service.ps1 -ResourceGroupName "my-rg" -AppServiceName "my-app"
+```
+
+#### Manual Deployment
+
+##### Prerequisites
 
 - Azure subscription active
 - Azure CLI installed (`az`)
 - Resource group created
 
-#### Deployment Steps
+##### Deployment Steps
 
 ```powershell
 # 1. Login to Azure
@@ -80,12 +93,27 @@ az webapp up `
 
 ### Option 2: Docker Container
 
-#### Prerequisites
+#### Using Deployment Script
+
+```powershell
+# Build and run with script
+.\scripts\deploy-docker.ps1 -Build -Run
+
+# Or separately
+.\scripts\deploy-docker.ps1 -Build    # Build image
+.\scripts\deploy-docker.ps1 -Run      # Run container
+.\scripts\deploy-docker.ps1 -Logs     # View logs
+.\scripts\deploy-docker.ps1 -Stop     # Stop container
+```
+
+#### Manual Deployment
+
+##### Prerequisites
 
 - Docker installed
 - Docker Hub account (or Azure Container Registry)
 
-#### Deployment Steps
+##### Deployment Steps
 
 ```powershell
 # 1. Build image

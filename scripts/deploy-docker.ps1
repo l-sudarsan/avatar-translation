@@ -24,7 +24,7 @@ param(
     [switch]$Logs
 )
 
-$scriptDir = $PSScriptRoot
+$scriptDir = Split-Path -Parent $PSScriptRoot
 
 # Build the Docker image
 if ($Build) {
@@ -44,7 +44,7 @@ if ($Run) {
     # Check if .env exists
     $envFile = Join-Path $scriptDir ".env"
     if (-not (Test-Path $envFile)) {
-        Write-Host "❌ .env file not found. Copy .env.example to .env and configure it." -ForegroundColor Red
+        Write-Host "❌ .env file not found at $envFile. Copy .env.example to .env and configure it." -ForegroundColor Red
         exit 1
     }
     
@@ -69,7 +69,7 @@ if ($Run) {
         Write-Host "=================================================" -ForegroundColor Green
         Write-Host "Application URL: http://localhost:$Port" -ForegroundColor Cyan
         Write-Host "Speaker URL:     http://localhost:$Port/speaker" -ForegroundColor Cyan
-        Write-Host "Translate URL:   http://localhost:$Port/translate" -ForegroundColor Cyan
+        Write-Host "Listener URL:    http://localhost:$Port/listener/<session-code>" -ForegroundColor Cyan
         Write-Host "`nView logs: .\deploy-docker.ps1 -Logs" -ForegroundColor Yellow
     } else {
         Write-Host "❌ Failed to start container!" -ForegroundColor Red

@@ -43,7 +43,6 @@ Welcome to the complete documentation for the Azure Speech Translation Avatar ap
 - Socket.IO room architecture
 - Data flow for single translation
 - Session state machine
-- Latency expectations
 - Scaling considerations
 
 **Audience**: Developers, architects, DevOps
@@ -63,7 +62,6 @@ Welcome to the complete documentation for the Azure Speech Translation Avatar ap
 - Performance tips
 - Speaker checklist
 - Listener experience overview
-- Mobile support
 - Security notes
 
 **Audience**: Developers, testers, anyone getting started

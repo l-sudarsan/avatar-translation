@@ -193,22 +193,22 @@ Listener                Azure Avatar Service         Browser
 └───────────────────────────────────────────────────────────────┘
                           ↓
 ┌───────────────────────────────────────────────────────────────┐
-│  1. MICROPHONE CAPTURE (~50ms buffer)                          │
+│  1. MICROPHONE CAPTURE                        │
 │     • Browser getUserMedia API → Azure Speech SDK              │
 └───────────────────────────────────────────────────────────────┘
                           ↓
 ┌───────────────────────────────────────────────────────────────┐
-│  2. SPEECH RECOGNITION (Azure) ~500ms                          │
+│  2. SPEECH RECOGNITION (Azure)                       │
 │     • Language: en-US → Result: "Hello, how are you?"          │
 └───────────────────────────────────────────────────────────────┘
                           ↓
 ┌───────────────────────────────────────────────────────────────┐
-│  3. TRANSLATION (Azure) ~100ms                                 │
+│  3. TRANSLATION (Azure)                                │
 │     • Target: es-ES → Result: "Hola, ¿cómo estás?"             │
 └───────────────────────────────────────────────────────────────┘
                           ↓
 ┌───────────────────────────────────────────────────────────────┐
-│  4. AVATAR SYNTHESIS (Azure) ~300ms                            │
+│  4. AVATAR SYNTHESIS (Azure)                       │
 │     • Voice: es-ES-ElviraNeural → Video + Audio stream         │
 └───────────────────────────────────────────────────────────────┘
                           ↓
@@ -225,7 +225,6 @@ Listener                Azure Avatar Service         Browser
 │   estás?"       │            │   estás?"       │
 └─────────────────┘            └─────────────────┘
 
-Total End-to-End Latency: ~1-1.5 seconds
 ```
 
 ## Session State Machine
@@ -284,21 +283,7 @@ Total End-to-End Latency: ~1-1.5 seconds
 | `static/js/speaker.js` | Speaker logic |
 | `static/js/listener.js` | Listener logic with WebRTC |
 
-## Latency Expectations
-
-| Stage | Time | Cumulative |
-|-------|------|------------|
-| Microphone → Azure | ~200ms | 200ms |
-| Speech Recognition | ~500ms | 700ms |
-| Translation | ~100ms | 800ms |
-| Avatar Synthesis | ~300ms | 1100ms |
-| Network to Listener | ~100ms | **~1.2s** |
-
-**Normal delay**: 1-2 seconds end-to-end
-
 ## Scaling Considerations
 
 - **Current**: In-memory sessions (single server)
 - **Production**: Use Redis for session storage
-- **Each listener**: Gets individual WebRTC connection to Azure
-- **Recommendation**: 10-50 concurrent listeners per server

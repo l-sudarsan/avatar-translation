@@ -4,16 +4,20 @@
 
 ## Prerequisites
 
-- Python 3.9+
+- Python 3.11+
 - Azure Speech resource configured
 - Visual Studio Code (recommended)
 
 ## Quick Start (5 Minutes)
 
-### Step 1: Install Dependencies
-
+### Step 1: Install Dependencies and activate
+Create and activate virtual environment
 ```powershell
-cd c:\Users\sudarsanl\dev-git\azure-speech\speech-avatar\avatar-translation
+cd avatar-translation
+python -m venv venv
+.\venv\Scripts\Activate 
+```
+```powershell
 pip install -r requirements.txt
 ```
 
@@ -290,22 +294,6 @@ New-NetFirewallRule -DisplayName "Flask Dev" -Direction Inbound -Port 5000 -Prot
 1. Open URL
 2. Wait for avatar connection
 3. Listen and watch!
-
----
-
-## Mobile Support
-
-### Listeners on Mobile
-✅ **Works great!**
-- Open listener URL in Safari/Chrome
-- Avatar plays smoothly
-- Translations display correctly
-
-### Speaker on Mobile
-⚠️ **Limited support**
-- Microphone works
-- UI may be cramped
-- Desktop recommended
 
 ---
 
