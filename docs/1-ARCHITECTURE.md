@@ -193,20 +193,20 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-    A["\ud83c\udfa4 SPEAKER SPEAKS<br/>\"Hello, how are you?\""]
+    A["🎤 SPEAKER SPEAKS<br/>Hello, how are you?"]
     
-    B["1\ufe0f⃣ MICROPHONE CAPTURE<br/>Browser getUserMedia API \u2192 Azure Speech SDK"]
+    B["1️⃣ MICROPHONE CAPTURE<br/>Browser getUserMedia API → Azure Speech SDK"]
     
-    C["2\ufe0f⃣ SPEECH RECOGNITION (Azure)<br/>Language: en-US \u2192 \"Hello, how are you?\""]
+    C["2️⃣ SPEECH RECOGNITION<br/>Language: en-US → Hello, how are you?"]
     
-    D["3\ufe0f⃣ TRANSLATION (Azure)<br/>Target: es-ES \u2192 \"Hola, \u00bfc\u00f3mo est\u00e1s?\""]
+    D["3️⃣ TRANSLATION<br/>Target: es-ES → Hola, ¿cómo estás?"]
     
-    E["4\ufe0f⃣ AVATAR SYNTHESIS (Azure)<br/>Voice: es-ES-ElviraNeural \u2192 Video + Audio"]
+    E["4️⃣ AVATAR SYNTHESIS<br/>Voice: es-ES-ElviraNeural → Video + Audio"]
     
-    F["\ud83d\udd17 WebRTC"]
+    F["🔗 WebRTC"]
     
-    G["\ud83d\udc64 LISTENER 1<br/>\ud83d\udde3\ufe0f Avatar plays<br/>\"Hola, \u00bfc\u00f3mo est\u00e1s?\""]
-    H["\ud83d\udc64 LISTENER 2<br/>\ud83d\udde3\ufe0f Avatar plays<br/>\"Hola, \u00bfc\u00f3mo est\u00e1s?\""]
+    G["👤 LISTENER 1<br/>🗣️ Avatar plays<br/>Hola, ¿cómo estás?"]
+    H["👤 LISTENER 2<br/>🗣️ Avatar plays<br/>Hola, ¿cómo estás?"]
     
     A --> B --> C --> D --> E --> F
     F --> G
@@ -222,22 +222,22 @@ stateDiagram-v2
     INITIAL --> CREATED: POST /api/createSession
     note right of CREATED
         active: false
-        \u2022 Has session ID & configuration
-        \u2022 Listener URL generated
+        • Has session ID & configuration
+        • Listener URL generated
     end note
     
     CREATED --> ACTIVE: Listeners join +<br/>POST /api/startTranslation
     note right of ACTIVE
         active: true
-        \u2022 Translations broadcasting
-        \u2022 Avatars speaking
+        • Translations broadcasting
+        • Avatars speaking
     end note
     
     ACTIVE --> PAUSED: POST /api/stopTranslation
     note right of PAUSED
         active: false
-        \u2022 Can resume translation
-        \u2022 History preserved
+        • Can resume translation
+        • History preserved
     end note
     
     PAUSED --> ACTIVE: POST /api/startTranslation
@@ -245,8 +245,8 @@ stateDiagram-v2
     ACTIVE --> ENDED: POST /api/endSession
     
     note right of ENDED
-        \u2022 Listeners notified
-        \u2022 Removed from storage
+        • Listeners notified
+        • Removed from storage
     end note
     
     ENDED --> [*]

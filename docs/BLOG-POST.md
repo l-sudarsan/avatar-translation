@@ -6,40 +6,46 @@
 
 ## Introduction
 
-Traditionally, language barriers have remained as one of the biggest challenges in communication. Whether it is holding an all-hands meeting for gloabally distributed setup, a healthcare provider consulting with non-native speaking patients, or an educator reaching students across continents—the need for seamless, real-time translation is critical in communication.
+Language barriers remain one of the biggest challenges in communication. Whether you're holding an all-hands meeting for a globally distributed team, consulting with non-native speaking patients, or teaching students across continents—seamless, real-time translation makes or breaks effective communication.
 
-Language barriers and ineffective tools can feel impersonal and disconnected. Text captions scroll across screens while speakers continue in their native tongue, creating a disjointed experience. What if instead, your audience could see and hear an AI avatar speaking directly to them in their own language, with natural lip-sync and human-like expressions?
+Traditional translation tools feel impersonal and disconnected. Text captions scroll across screens while speakers continue in their native tongue, creating a disjointed experience. What if your audience could see and hear an AI avatar speaking directly to them in their own language, with natural lip-sync and human-like expressions?
 
-**Azure Speech Translation Avatar** is a real-time speech translation solution where a speaker talks in one language, and listeners see an AI avatar delivering the translated speech in their chosen language.
+**Azure Speech Translation Avatar** is designed to address these requirements: a speaker talks in one language, and listeners watch an AI avatar deliver the translated speech in their chosen language.
 
 Imagine a CEO in Tokyo delivering a quarterly update. Employees in Munich, São Paulo, and Mumbai each see an AI avatar speaking to them in German, Portuguese, and Hindi respectively—all in real-time, with synchronized lip movements and natural speech patterns. The speaker focuses on their message; the technology handles the rest.
+
+> 💻 **Source Code**: The complete implementation is available on GitHub: [avatar-translation](https://github.com/l-sudarsan/avatar-translation)
 
 ---
 
 ## How It Works
 
-The Avatar Speech translation app supports **separate speaker and listener modes** with session-based communication:
-
-- **Speaker Mode**: Controls translation settings, starts/stops translation, manages session. Does NOT see avatar video/audio.
-- **Listener Mode**: Receives avatar video/audio and live translations. NO controls, avatar-only experience.
-
-The application uses a **Speaker/Listener architecture** that separates the presenter experience from the audience experience:
+The application uses a **session-based Speaker/Listener architecture** to separate the presenter's control interface from the audience's viewing experience. This design prevents audio feedback loops and optimizes the user experience for each role.
 
 ### Speaker Mode
-- Controls translation settings (source language, target language, avatar selection)
-- Creates and manages sessions with unique 6-digit codes
-- Starts/stops translation
-- Sees live transcription and listener count
-- **Does not see the avatar** (prevents audio feedback)
+
+The speaker interface gives presenters full control over the translation session:
+
+- **Session Management**: Create sessions and generate shareable listener URLs
+- **Language Configuration**: Select source language (what you speak) and target language (what listeners hear)
+- **Avatar Selection**: Choose from prebuilt or custom avatars for the translation output
+- **Real-time Feedback**: View live transcription of your speech and monitor listener count
+- **No Avatar Display**: The interface intentionally hides the avatar video/audio to prevent microphone feedback loops
 
 ### Listener Mode
-- Joins via a shareable URL containing the session code
-- Sees the AI avatar video with synchronized lip movements
-- Hears translated speech in the target language
-- Views translation history
-- **No controls**—pure viewing experience
 
-### The Technology Stack
+The listener interface delivers an immersive, distraction-free viewing experience:
+
+- **Easy Access**: Join via a simple URL containing the session code (e.g., `/listener/123456`)
+- **Avatar Video**: Watch the AI avatar with synchronized lip movements matching the translated speech
+- **Translated Audio**: Hear the avatar speak the translation in the target language
+- **Caption Display**: Read real-time translation text alongside the avatar
+- **Translation History**: Scroll through all translations from the session
+- **No Controls**: Focus entirely on the content without distracting UI elements
+
+### echnology Stack
+
+The diagram below shows how the components interact. The Flask server acts as the central hub, coordinating communication between the speaker's browser, Azure Speech Services, and multiple listener clients.
 
 ```mermaid
 flowchart TB
@@ -78,11 +84,15 @@ flowchart TB
 
 ## Implementation Deep Dive
 
+You can check the complete source code in the [GitHub repository](https://github.com/l-sudarsan/avatar-translation).
+
 ### Core Components
+
+Five main technical components power the application, each handling a specific part of the translation pipeline.
 
 #### 1. Backend: Flask + Socket.IO
 
-The server is built with **Flask** and **Flask-SocketIO** using the **Eventlet** async worker for WebSocket support. This combination provides:
+The server uses **Flask** and **Flask-SocketIO** with the **Eventlet** async worker for WebSocket support. This combination delivers:
 
 - **HTTP endpoints** for session management and avatar connection
 - **WebSocket rooms** for real-time translation broadcasting
@@ -104,7 +114,7 @@ sessions = {
 
 #### 2. Audio Streaming: Browser to Server
 
-Rather than using server-side microphone access, we capture audio directly in the browser using the **Web Audio API**:
+Instead of relying on server-side microphone access, the browser captures audio directly using the **Web Audio API**:
 
 ```javascript
 // Speaker captures microphone at 16kHz
@@ -189,96 +199,88 @@ Each listener maintains their own WebRTC connection to the Avatar Service, ensur
 
 ### Key Design Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| **Browser audio capture** | Works in any environment; no server mic permissions needed |
-| **Session-based rooms** | Isolates translation streams; supports multiple concurrent sessions |
-| **Separate speaker/listener UIs** | Prevents audio feedback; optimizes each experience |
-| **Socket.IO for broadcasts** | Reliable real-time delivery; automatic reconnection |
-| **WebRTC for avatar** | Low-latency video; peer-to-peer efficiency |
+- **Browser audio capture**: Works in any environment without requiring server microphone permissions
+- **Session-based rooms**: Isolates translation streams and supports multiple concurrent sessions
+- **Separate speaker/listener UIs**: Prevents audio feedback and optimizes each user's experience
+- **Socket.IO for broadcasts**: Delivers reliable real-time messaging with automatic reconnection
+- **WebRTC for avatar**: Provides low-latency video streaming with peer-to-peer efficiency
 
 ---
 
 ## Application Areas
 
-Real-time speech translation with AI avatars opens up transformative possibilities across industries:
+Real-time speech translation with AI avatars unlocks transformative possibilities across industries. Here are key sectors where this technology drives significant impact.
 
 ### 🏢 Enterprise & Corporate
 
 **Internal Townhalls & All-Hands Meetings**
-Global organizations can deliver executive communications where every employee hears the message in their native language—not through subtitles, but through an avatar that speaks directly to them.
+Global organizations deliver executive communications where every employee hears the message in their native language—not through subtitles, but through an avatar speaking directly to them.
 
 **Sales Conversations**
-Sales teams can engage international prospects without language barriers. The avatar creates a more personal connection than text translation while maintaining the authenticity of the original speaker's message.
+Sales teams engage international prospects without language barriers. The avatar builds a more personal connection than text translation while preserving the original speaker's authenticity.
 
 **Training & Onboarding**
-Standardized training content can reach employees worldwide, with each viewer experiencing the content in their preferred language through an engaging avatar presenter.
+Standardized training content reaches employees worldwide, with each viewer experiencing the material in their preferred language through an engaging avatar presenter.
 
 ### 🏥 Healthcare
 
 **Patient Communication**
-Healthcare providers can consult with patients who speak different languages, with the avatar delivering medical information clearly and accurately in the patient's native tongue.
+Healthcare providers consult with patients who speak different languages, while the avatar delivers medical information clearly and accurately in the patient's native tongue.
 
 **Telehealth**
-Remote healthcare consultations become accessible to non-native speakers, improving health outcomes by ensuring patients fully understand their care instructions.
+Remote healthcare consultations reach non-native speakers effectively, improving health outcomes by ensuring patients fully understand their care instructions.
 
 ### 🎓 Education
 
 **Online Learning**
-Educational institutions can expand their reach globally, with lectures and courses automatically available in multiple languages through avatar presenters.
+Educational institutions expand their global reach, offering lectures and courses in multiple languages through avatar presenters.
 
 **Interactive Lessons**
-Engaging educational content with avatar presenters can captivate students while delivering content in their native language.
+Engaging avatar presenters captivate students while delivering content in their native language.
 
 **Museum Tours**
-Cultural institutions can offer multilingual guided experiences where visitors receive personalized tours in their language of choice.
+Cultural institutions offer multilingual guided experiences where visitors receive personalized tours in their language of choice.
 
 ### 📺 Media & Entertainment
 
 **Broadcasting**
-News organizations and content creators can deliver content to international audiences with localized avatar presenters, maintaining engagement while breaking language barriers.
+News organizations and content creators deliver content to international audiences with localized avatar presenters, keeping viewers engaged while breaking language barriers.
 
 **Live Events**
-Conferences, product launches, and presentations can reach global audiences with real-time translated avatar streams for each language group.
-
-### ♿ Accessibility
-
-**ALS Voice Preservation**
-Individuals with speech impairments can preserve their voice and communicate through personalized avatars that speak on their behalf.
-
-**Real-Time Translation**
-Breaking down language barriers makes content accessible to diverse populations who might otherwise be excluded.
+Conferences, product launches, and presentations reach global audiences with real-time translated avatar streams for each language group.
 
 ---
 
 ## Custom Avatars: Your Brand, Your Voice
 
-While prebuilt avatars work great for many scenarios, organizations can create **custom avatars** that represent their brand:
+While prebuilt avatars work great for many scenarios, organizations can build **custom avatars** that represent their brand identity. This section covers the creation process and important ethical considerations.
 
 ### The Process
 
-1. **Request Access**: Custom avatar access requires approval via [Microsoft's intake form](https://aka.ms/customneural)
-2. **Record Training Data**: Capture at least 10 minutes of video of your avatar talent
-3. **Obtain Consent**: Get recorded consent from the talent acknowledging use of their likeness
+1. **Request Access**: Submit [Microsoft's intake form](https://aka.ms/customneural) for custom avatar approval
+2. **Record Training Data**: Capture at least 10 minutes of video featuring your avatar talent
+3. **Obtain Consent**: Record the talent acknowledging use of their likeness
 4. **Train the Model**: Use Microsoft Foundry Portal to train your custom avatar
 5. **Deploy**: Deploy the trained model to your Azure Speech resource
 
 ### Responsible AI Considerations
 
-Creating synthetic representations of people comes with ethical responsibilities:
+Building synthetic representations of people carries ethical responsibilities:
 
-- **Explicit Written Consent**: Always obtain permission from the talent
-- **Informed Consent**: Ensure talent understands how the technology works
+- **Explicit Written Consent**: Always get permission from the talent
+- **Informed Consent**: Make sure talent understands how the technology works
 - **Usage Transparency**: Share intended use cases with the talent
 - **Prohibited Uses**: Never use for deception, misinformation, or impersonation
 
-Microsoft provides comprehensive [Responsible AI guidelines](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/disclosure-voice-talent) that must be followed when creating custom avatars.
+Microsoft publishes comprehensive [Responsible AI guidelines](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/speech-service/text-to-speech/disclosure-voice-talent) that you must follow when creating custom avatars.
 
 ---
 
 ## Getting Started
 
-Ready to build your own real-time translation avatar application? Here's what you need:
+Ready to build your own real-time translation avatar application? Grab the complete source code and documentation from GitHub.
+
+> 📚 **Full Documentation**: [github.com/l-sudarsan/avatar-translation/docs](https://github.com/l-sudarsan/avatar-translation/tree/master/docs)
 
 ### Prerequisites
 - Python 3.8+
@@ -288,6 +290,10 @@ Ready to build your own real-time translation avatar application? Here's what yo
 ### Quick Start
 
 ```powershell
+# Clone the repository
+git clone https://github.com/l-sudarsan/avatar-translation.git
+cd avatar-translation
+
 # 1. Create and activate virtual environment
 python -m venv venv
 .\venv\Scripts\Activate
@@ -318,11 +324,11 @@ python -m flask run --host=0.0.0.0 --port=5000
 
 ## Conclusion
 
-Real-time speech translation with AI avatars represents a significant leap forward in how we communicate across language barriers. By combining Azure's powerful Speech Translation, Text-to-Speech, and Avatar Synthesis services, we can create experiences that feel personal and engaging—not just functional.
+Real-time speech translation with AI avatars marks a significant leap forward in cross-language communication. By combining Azure's powerful Speech Translation, Text-to-Speech, and Avatar Synthesis services, you can build experiences that feel personal and engaging—not just functional.
 
-The speaker/listener architecture ensures clean separation of concerns: speakers focus on their message while listeners receive a tailored, localized experience. WebRTC provides low-latency video streaming, Socket.IO enables real-time translation broadcasting, and Azure handles the complex AI processing.
+The speaker/listener architecture cleanly separates concerns: speakers focus on their message while listeners receive a tailored, localized experience. WebRTC delivers low-latency video streaming, Socket.IO handles real-time translation broadcasting, and Azure powers the complex AI processing.
 
-Whether you're a global enterprise looking to connect your workforce, a healthcare provider serving diverse communities, or an educator reaching international students—this technology makes truly inclusive communication possible.
+Whether you're a global enterprise connecting your workforce, a healthcare provider serving diverse communities, or an educator reaching international students—this technology makes truly inclusive communication possible.
 
 The future of multilingual communication isn't about reading subtitles. It's about having someone speak directly to you in your language.
 
@@ -330,6 +336,11 @@ The future of multilingual communication isn't about reading subtitles. It's abo
 
 ## Resources
 
+**Project Repository**
+- 💻 [GitHub: avatar-translation](https://github.com/l-sudarsan/avatar-translation)
+- 📚 [Project Documentation](https://github.com/l-sudarsan/avatar-translation/tree/master/docs)
+
+**Azure Documentation**
 - [Azure Speech Service Documentation](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/)
 - [Text-to-Speech Avatar Overview](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech-avatar/what-is-text-to-speech-avatar)
 - [Custom Avatar Creation Guide](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech-avatar/custom-avatar-create)
@@ -338,4 +349,4 @@ The future of multilingual communication isn't about reading subtitles. It's abo
 
 ---
 
-*Built with Azure Speech Services, Flask, Socket.IO, and WebRTC.*
+*Built with Azure AI Services, Github Copliot, Flask, Socket.IO, and WebRTC.*

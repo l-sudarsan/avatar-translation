@@ -2,7 +2,7 @@
 
 ## Overview
 
-The translation app now supports **separate speaker and listener modes** with session-based communication:
+The translation app supports **separate speaker and listener modes** with session-based communication:
 
 - **Speaker Mode**: Controls translation settings, starts/stops translation, manages session. Does NOT see avatar video/audio.
 - **Listener Mode**: Receives avatar video/audio and live translations. NO controls, avatar-only experience.
