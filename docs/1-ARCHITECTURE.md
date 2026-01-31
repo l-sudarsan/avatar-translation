@@ -11,256 +11,245 @@ The Azure Speech Translation Avatar application uses a **Speaker/Listener mode**
 
 ## High-Level Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         FLASK SERVER (app.py)                        │
-│                                                                       │
-│  ┌──────────────────┐  ┌─────────────────┐  ┌──────────────────┐   │
-│  │  HTTP Routes     │  │  Socket.IO      │  │  Session         │   │
-│  │  /speaker        │  │  Rooms          │  │  Management      │   │
-│  │  /listener/{id}  │  │  Broadcasting   │  │  Storage         │   │
-│  │  /api/*          │  │  Tracking       │  │  {id: {...}}     │   │
-│  └──────────────────┘  └─────────────────┘  └──────────────────┘   │
-│                                                                       │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │              Azure Speech SDK Integration                      │   │
-│  │  • TranslationRecognizer (Microphone → Translation)           │   │
-│  │  • SpeechSynthesizer (Translation → Avatar Speech)            │   │
-│  │  • WebRTC Connection (Avatar Video Stream)                    │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
-                                    ↕
-                    ┌───────────────────────────────┐
-                    │    Azure Speech Service       │
-                    │  • Speech Recognition         │
-                    │  • Translation                │
-                    │  • Avatar Synthesis (WebRTC)  │
-                    └───────────────────────────────┘
-                                    ↕
-        ┌──────────────────────────────────────────────────┐
-        │                                                    │
-        ↓                                                    ↓
-┌──────────────────┐                            ┌──────────────────┐
-│   SPEAKER UI     │                            │   LISTENER UI    │
-│  (speaker.html)  │                            │  (listener.html) │
-│                  │                            │                  │
-│  • Session Mgmt  │                            │  • Avatar Video  │
-│  • Controls      │                            │  • Translation   │
-│  • Transcription │                            │  • History       │
-│  • Listener Count│                            │  • Audio Visual  │
-│                  │                            │                  │
-│  NO AVATAR       │                            │  NO CONTROLS     │
-└──────────────────┘                            └──────────────────┘
+```mermaid
+flowchart TB
+    subgraph Server["🖥️ FLASK SERVER (app.py)"]
+        subgraph Routes["HTTP Routes"]
+            R1["/speaker"]
+            R2["/listener/id"]
+            R3["/api/*"]
+        end
+        subgraph SocketIO["Socket.IO"]
+            SO1[Rooms]
+            SO2[Broadcasting]
+            SO3[Tracking]
+        end
+        subgraph Sessions["Session Management"]
+            SM1[Storage]
+            SM2["{id: {...}}"]
+        end
+        subgraph SDK["Azure Speech SDK Integration"]
+            SDK1[TranslationRecognizer]
+            SDK2[SpeechSynthesizer]
+            SDK3[WebRTC Connection]
+        end
+    end
+    
+    subgraph Azure["☁️ Azure Speech Service"]
+        A1[Speech Recognition]
+        A2[Translation]
+        A3[Avatar Synthesis]
+    end
+    
+    subgraph SpeakerUI["🎤 SPEAKER UI (speaker.html)"]
+        SP1[Session Management]
+        SP2[Controls]
+        SP3[Transcription]
+        SP4[Listener Count]
+        SP5["❌ NO AVATAR"]
+    end
+    
+    subgraph ListenerUI["👁️ LISTENER UI (listener.html)"]
+        LI1[Avatar Video]
+        LI2[Translation Display]
+        LI3[History]
+        LI4[Audio/Visual]
+        LI5["❌ NO CONTROLS"]
+    end
+    
+    Server <--> Azure
+    Azure --> SpeakerUI
+    Azure --> ListenerUI
+    SpeakerUI <--> Server
+    ListenerUI <--> Server
 ```
 
 ## Session Communication Flow
 
-```
-Speaker creates session → Gets unique 6-digit code → Generates listener URL
-        ↓
-    Speaker starts translation and speaks
-        ↓
-    Translation broadcast to session room via Socket.IO
-        ↓
-    All listeners in session receive:
-        - Real-time translations
-        - Avatar video/audio (WebRTC)
-        - Translation history
+```mermaid
+flowchart TD
+    A[Speaker creates session] --> B[Gets unique 6-digit code]
+    B --> C[Generates listener URL]
+    C --> D[Speaker starts translation and speaks]
+    D --> E[Translation broadcast to session room via Socket.IO]
+    E --> F[All listeners in session receive:]
+    F --> G[📝 Real-time translations]
+    F --> H[🎥 Avatar video/audio via WebRTC]
+    F --> I[📜 Translation history]
 ```
 
 ## Session Flow Phases
 
 ### Phase 1: Session Creation
 
-```
-Speaker                    Server                    Storage
-  │                          │                          │
-  │  POST /api/createSession │                          │
-  ├─────────────────────────>│                          │
-  │                          │  Generate 6-digit code   │
-  │                          ├─────────────────────────>│
-  │                          │  Store session config    │
-  │                          │<─────────────────────────│
-  │  {sessionId, URL, ...}   │                          │
-  │<─────────────────────────┤                          │
-  │  Display session info    │                          │
+```mermaid
+sequenceDiagram
+    participant Speaker
+    participant Server
+    participant Storage
+    
+    Speaker->>Server: POST /api/createSession
+    Server->>Storage: Generate 6-digit code
+    Storage-->>Server: Store session config
+    Server-->>Speaker: {sessionId, URL, ...}
+    Note over Speaker: Display session info
 ```
 
 ### Phase 2: Listener Joins
 
-```
-Listener                   Server                    Speaker
-  │                          │                          │
-  │  GET /listener/123456    │                          │
-  ├─────────────────────────>│                          │
-  │  listener.html + config  │                          │
-  │<─────────────────────────┤                          │
-  │  Socket.IO connect       │                          │
-  ├─────────────────────────>│                          │
-  │  emit('joinSession')     │                          │
-  ├─────────────────────────>│                          │
-  │                          │  emit('listenerJoined')  │
-  │                          ├─────────────────────────>│
-  │  POST /api/connect...    │                          │
-  │  Avatar (WebRTC SDP)     │                          │
-  ├─────────────────────────>│                          │
-  │  {sdp: "...answer"}      │                          │
-  │<─────────────────────────┤                          │
-  │  WebRTC established      │                          │
+```mermaid
+sequenceDiagram
+    participant Listener
+    participant Server
+    participant Speaker
+    
+    Listener->>Server: GET /listener/123456
+    Server-->>Listener: listener.html + config
+    Listener->>Server: Socket.IO connect
+    Listener->>Server: emit('joinSession')
+    Server->>Speaker: emit('listenerJoined')
+    Listener->>Server: POST /api/connectListenerAvatar (WebRTC SDP)
+    Server-->>Listener: {sdp: "...answer"}
+    Note over Listener: WebRTC established
 ```
 
 ### Phase 3: Translation
 
-```
-Speaker                    Server                    Listeners (All)
-  │                          │                          │
-  │  POST /api/start...      │                          │
-  ├─────────────────────────>│                          │
-  │                          │  Start TranslationRec    │
-  │  🎤 Speak into mic       │                          │
-  │                          │  Recognize → Translate   │
-  │                          │  Synthesize avatar       │
-  │                          │  emit('translationResult')
-  │                          ├─────────────────────────>│
-  │<─────────────────────────┤                          │
-  │  Update transcription    │  🗣️ Avatar speaks       │
+```mermaid
+sequenceDiagram
+    participant Speaker
+    participant Server
+    participant Listeners as Listeners (All)
+    
+    Speaker->>Server: POST /api/startTranslation
+    Note over Server: Start TranslationRecognizer
+    Speaker->>Server: 🎤 Speak into mic (audioData)
+    Note over Server: Recognize → Translate → Synthesize avatar
+    Server->>Listeners: emit('translationResult')
+    Server-->>Speaker: Update transcription
+    Note over Listeners: 🗣️ Avatar speaks
 ```
 
 ### Phase 4: Session End
 
-```
-Speaker                    Server                    Listeners (All)
-  │                          │                          │
-  │  POST /api/endSession    │                          │
-  ├─────────────────────────>│                          │
-  │                          │  emit('sessionEnded')    │
-  │                          ├─────────────────────────>│
-  │  {status: "ended"}       │                          │
-  │<─────────────────────────┤                          │
-  │  UI resets               │  Disconnect avatar       │
+```mermaid
+sequenceDiagram
+    participant Speaker
+    participant Server
+    participant Listeners as Listeners (All)
+    
+    Speaker->>Server: POST /api/endSession
+    Server->>Listeners: emit('sessionEnded')
+    Server-->>Speaker: {status: "ended"}
+    Note over Speaker: UI resets
+    Note over Listeners: Disconnect avatar
 ```
 
 ## WebRTC Avatar Connection Flow
 
-```
-Listener                Azure Avatar Service         Browser
-  │                            │                        │
-  │  1. Create PeerConnection  │                        │
-  │  2. Add transceivers       │                        │
-  │  3. Create SDP offer       │                        │
-  │  4. Wait for ICE gathering │                        │
-  │  5. POST /api/connect...   │                        │
-  ├────────────────────────────>                        │
-  │                            │  Process SDP offer     │
-  │  {sdp: "answer"}           │                        │
-  │<────────────────────────────                        │
-  │  6. Set remote description │                        │
-  │  7. ICE candidates exchange│                        │
-  │  8. Connection established │                        │
-  │  9. Receive media tracks   │                        │
-  │<────────────────────────────────────────────────────│
-  │  ✅ Avatar video playing   │                        │
+```mermaid
+sequenceDiagram
+    participant Listener
+    participant Server
+    participant Azure as Azure Avatar Service
+    
+    Note over Listener: 1. Create PeerConnection
+    Note over Listener: 2. Add transceivers
+    Note over Listener: 3. Create SDP offer
+    Note over Listener: 4. Wait for ICE gathering
+    Listener->>Server: 5. POST /api/connectListenerAvatar
+    Server->>Azure: Forward SDP offer
+    Azure-->>Server: Process & return SDP answer
+    Server-->>Listener: {sdp: "answer"}
+    Note over Listener: 6. Set remote description
+    Listener->>Azure: 7. ICE candidates exchange
+    Note over Listener,Azure: 8. Connection established
+    Azure->>Listener: 9. Receive media tracks (video/audio)
+    Note over Listener: ✅ Avatar video playing
 ```
 
 ## Socket.IO Room Architecture
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│                       Socket.IO Server                          │
-│                                                                  │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │  Session Room: "123456"                                   │  │
-│  │                                                            │  │
-│  │  Members:                                                  │  │
-│  │  ┌────────────────┐  ┌────────────────┐  ┌────────────┐  │  │
-│  │  │ Speaker        │  │ Listener 1     │  │ Listener 2 │  │  │
-│  │  │ SID: abc123    │  │ SID: def456    │  │ SID: ghi789│  │  │
-│  │  └────────────────┘  └────────────────┘  └────────────┘  │  │
-│  │                                                            │  │
-│  │  Broadcasted Events:                                       │  │
-│  │  • translationResult  ───────> All members                 │  │
-│  │  • listenerJoined     ───────> All members                 │  │
-│  │  • sessionEnded       ───────> All members                 │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph SocketServer["Socket.IO Server"]
+        subgraph Room["Session Room: 123456"]
+            Speaker["Speaker<br/>SID: abc123"]
+            L1["Listener 1<br/>SID: def456"]
+            L2["Listener 2<br/>SID: ghi789"]
+        end
+        
+        subgraph Events["Broadcasted Events"]
+            E1["translationResult"]
+            E2["listenerJoined"]
+            E3["sessionEnded"]
+        end
+    end
+    
+    Events -->|"All members"| Room
 ```
 
 ## Data Flow - Single Translation
 
-```
-┌───────────────────────────────────────────────────────────────┐
-│  SPEAKER SPEAKS: "Hello, how are you?"                         │
-└───────────────────────────────────────────────────────────────┘
-                          ↓
-┌───────────────────────────────────────────────────────────────┐
-│  1. MICROPHONE CAPTURE                        │
-│     • Browser getUserMedia API → Azure Speech SDK              │
-└───────────────────────────────────────────────────────────────┘
-                          ↓
-┌───────────────────────────────────────────────────────────────┐
-│  2. SPEECH RECOGNITION (Azure)                       │
-│     • Language: en-US → Result: "Hello, how are you?"          │
-└───────────────────────────────────────────────────────────────┘
-                          ↓
-┌───────────────────────────────────────────────────────────────┐
-│  3. TRANSLATION (Azure)                                │
-│     • Target: es-ES → Result: "Hola, ¿cómo estás?"             │
-└───────────────────────────────────────────────────────────────┘
-                          ↓
-┌───────────────────────────────────────────────────────────────┐
-│  4. AVATAR SYNTHESIS (Azure)                       │
-│     • Voice: es-ES-ElviraNeural → Video + Audio stream         │
-└───────────────────────────────────────────────────────────────┘
-                          ↓
-                    ┌─────────┐
-                    │ WebRTC  │
-                    └─────────┘
-                          ↓
-        ┌─────────────────────────────────┐
-        ↓                                 ↓
-┌─────────────────┐            ┌─────────────────┐
-│  LISTENER 1     │            │  LISTENER 2     │
-│  🗣️ Avatar plays │            │  🗣️ Avatar plays │
-│  "Hola, ¿cómo   │            │  "Hola, ¿cómo   │
-│   estás?"       │            │   estás?"       │
-└─────────────────┘            └─────────────────┘
-
+```mermaid
+flowchart TD
+    A["\ud83c\udfa4 SPEAKER SPEAKS<br/>\"Hello, how are you?\""]
+    
+    B["1\ufe0f⃣ MICROPHONE CAPTURE<br/>Browser getUserMedia API \u2192 Azure Speech SDK"]
+    
+    C["2\ufe0f⃣ SPEECH RECOGNITION (Azure)<br/>Language: en-US \u2192 \"Hello, how are you?\""]
+    
+    D["3\ufe0f⃣ TRANSLATION (Azure)<br/>Target: es-ES \u2192 \"Hola, \u00bfc\u00f3mo est\u00e1s?\""]
+    
+    E["4\ufe0f⃣ AVATAR SYNTHESIS (Azure)<br/>Voice: es-ES-ElviraNeural \u2192 Video + Audio"]
+    
+    F["\ud83d\udd17 WebRTC"]
+    
+    G["\ud83d\udc64 LISTENER 1<br/>\ud83d\udde3\ufe0f Avatar plays<br/>\"Hola, \u00bfc\u00f3mo est\u00e1s?\""]
+    H["\ud83d\udc64 LISTENER 2<br/>\ud83d\udde3\ufe0f Avatar plays<br/>\"Hola, \u00bfc\u00f3mo est\u00e1s?\""]
+    
+    A --> B --> C --> D --> E --> F
+    F --> G
+    F --> H
 ```
 
 ## Session State Machine
 
-```
-┌──────────────┐
-│   INITIAL    │  (No session exists)
-└──────────────┘
-       │ POST /api/createSession
-       ↓
-┌──────────────┐
-│   CREATED    │  (Session exists, not active)
-│   active:    │  • Has session ID & configuration
-│   false      │  • Listener URL generated
-└──────────────┘
-       │ Listeners join + POST /api/startTranslation
-       ↓
-┌──────────────┐
-│   ACTIVE     │  (Translation in progress)
-│   active:    │  • Translations broadcasting
-│   true       │  • Avatars speaking
-└──────────────┘
-       │ POST /api/stopTranslation
-       ↓
-┌──────────────┐
-│   PAUSED     │  (Translation stopped, session alive)
-│   active:    │  • Can resume translation
-│   false      │  • History preserved
-└──────────────┘
-       │ POST /api/endSession
-       ↓
-┌──────────────┐
-│   ENDED      │  (Session terminated)
-│              │  • Listeners notified
-│              │  • Removed from storage
-└──────────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> INITIAL: No session exists
+    
+    INITIAL --> CREATED: POST /api/createSession
+    note right of CREATED
+        active: false
+        \u2022 Has session ID & configuration
+        \u2022 Listener URL generated
+    end note
+    
+    CREATED --> ACTIVE: Listeners join +<br/>POST /api/startTranslation
+    note right of ACTIVE
+        active: true
+        \u2022 Translations broadcasting
+        \u2022 Avatars speaking
+    end note
+    
+    ACTIVE --> PAUSED: POST /api/stopTranslation
+    note right of PAUSED
+        active: false
+        \u2022 Can resume translation
+        \u2022 History preserved
+    end note
+    
+    PAUSED --> ACTIVE: POST /api/startTranslation
+    PAUSED --> ENDED: POST /api/endSession
+    ACTIVE --> ENDED: POST /api/endSession
+    
+    note right of ENDED
+        \u2022 Listeners notified
+        \u2022 Removed from storage
+    end note
+    
+    ENDED --> [*]
 ```
 
 ## Key Components

@@ -135,16 +135,32 @@ python -m flask run --host=0.0.0.0 --port=5000
 
 ## How It Works
 
-```
-┌──────────────────┐     ┌─────────────────┐     ┌──────────────────┐
-│  SPEAKER         │     │   FLASK SERVER  │     │  LISTENER(S)     │
-│  speaker.html    │     │    app.py       │     │  listener.html   │
-├──────────────────┤     ├─────────────────┤     ├──────────────────┤
-│ • Create session │────>│ • Session mgmt  │     │ • Avatar video   │
-│ • Start/stop     │     │ • Translation   │────>│ • Live captions  │
-│ • See captions   │<────│ • Broadcasting  │     │ • History        │
-│ (No avatar)      │     │ • WebRTC relay  │     │ (No controls)    │
-└──────────────────┘     └─────────────────┘     └──────────────────┘
+```mermaid
+flowchart LR
+    subgraph Speaker["🎤 SPEAKER<br/>speaker.html"]
+        S1[Create session]
+        S2[Start/stop]
+        S3[See captions]
+        S4["(No avatar)"]
+    end
+    
+    subgraph Server["🖥️ FLASK SERVER<br/>app.py"]
+        SV1[Session mgmt]
+        SV2[Translation]
+        SV3[Broadcasting]
+        SV4[WebRTC relay]
+    end
+    
+    subgraph Listeners["👥 LISTENER(S)<br/>listener.html"]
+        L1[Avatar video]
+        L2[Live captions]
+        L3[History]
+        L4["(No controls)"]
+    end
+    
+    Speaker -->|Controls| Server
+    Server -->|Transcription| Speaker
+    Server -->|Translations| Listeners
 ```
 
 **Speaker** controls translation; **Listeners** see/hear the avatar. Translation results are broadcast to all listeners via Socket.IO, while each listener has their own WebRTC connection to Azure Avatar Service.
@@ -267,7 +283,3 @@ avatar-translation/
 - **Frontend**: Vanilla JS + Socket.IO client
 - **Streaming**: WebRTC for avatar video, Socket.IO for translations
 - **Azure Services**: Speech Translation, Speech Synthesis, Avatar Synthesis
-
-## License
-
-Copyright (c) Microsoft Corporation. Licensed under the MIT license.
